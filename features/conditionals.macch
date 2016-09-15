@@ -1,0 +1,44 @@
+brew conds[] {
+
+    steamln["set x to 1"];
+    brew x : $1;
+
+    if [ x = $1 ] {
+        steamln["x = $1 is true"];
+    }
+    else {
+        steamln["x = $1 is false"];
+     }
+
+    steamln["set x to 2"];
+    x : $2;
+
+    if [ x = $1 ] {
+        steamln["x = $1 is true"];
+    }
+    else {
+        steamln["x = $1 is false"];
+    }
+
+    steamln["demonstrating short circuiting..."];
+
+    brew y : $2;
+
+    if [ (x = $1) and (y = $2) ] {
+        steamln["x = 1 is true and y = 2 is true"];
+    }
+    else {
+        steamln["x = 1 is false or y = 2 is false"];
+    }
+
+    x : $1;
+
+    if [ (x = $1) and (y = $2) ] {
+        steamln["x = 1 is true and y = 2 is true"];
+    }
+    else {
+        steamln["x = 1 is false or y = 2 is false"];
+    }
+}
+
+conds[];

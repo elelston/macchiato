@@ -1,0 +1,28 @@
+brew recur[n] {
+    if [ n = $5 ] {
+        "done";
+    }
+    else {
+        steamln["n is ", n];
+        recur[n + $1];
+    }
+}
+
+brew fib[n] {
+    if [ n <= $1 ] {
+        n;
+    }
+    else {
+        fib[n - $1] + fib[ n - $2];
+    }
+}
+
+brew main[] {
+    steamln["print 5 ints recursively..."];
+    recur[$0];
+    steamln["show fibonacci..."];
+
+    steamln["fibonacci of 10 is ", fib[$10]];
+}
+
+main[];

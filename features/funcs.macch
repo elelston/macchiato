@@ -1,0 +1,15 @@
+brew x[] {
+    steamln["inside x function"];
+}
+
+brew run-proc[proc] {
+    steamln["begin running proc..."];
+    proc[];
+}
+
+brew main[] {
+    steamln["run function run-proc with function x as an argument, then call x"];
+    run-proc[x];
+}
+
+main[];

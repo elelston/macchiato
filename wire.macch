@@ -1,0 +1,417 @@
+&^ --------------------------------------------------
+&
+&   Test Problem: One Bit Full Adder
+&   Macchiato Programming Language
+&
+& -------------------------------------------------- ^&
+
+brew inverter-delay : $1;
+brew and-gate-delay : $5;
+brew or-gate-delay : $3;
+
+&& ----- cons cell implementation ---------------------------&&
+brew cons[car, cdr] {
+    mug;
+}
+
+&& ----- regular queue implementation ---------------------------&&
+
+brew front-ptr[queue] { queue.car; }
+brew rear-ptr[queue] { queue.cdr; }
+brew set-front-ptr![queue, item] { queue.car : item; }
+brew set-rear-ptr![queue, item] { queue.cdr : item; }
+
+brew empty-queue?[queue] {
+    if [front-ptr[queue] = empty] {
+        true;
+    }
+    else {
+        false;
+    }
+}
+
+brew make-queue[] {
+    cons[empty, empty];
+}
+
+brew front-queue[queue] {
+    if [ empty-queue?[queue] ] {
+        steamln["error: FRONT called with an empty queue"];
+    }
+    else {
+        brew temp: front-ptr[queue];
+        temp.car;
+    }
+}
+
+brew insert-queue![queue, item] {
+    brew new-pair : cons[item, empty];
+
+    if [ empty-queue?[queue] ] {
+        set-front-ptr![queue, new-pair];
+        set-rear-ptr![queue, new-pair];
+        queue;
+    }
+    else {
+        brew temp : rear-ptr[queue];
+        temp.cdr : new-pair;
+        set-rear-ptr![queue, new-pair];
+        queue;
+    }
+
+    &&queue;
+}
+
+brew delete-queue![queue] {
+    if [ empty-queue?[queue] ] {
+        steamln["error: DELETE called with an empty queue"];
+    }
+    else {
+        brew temp : front-ptr[queue];
+        set-front-ptr![queue, temp.cdr];
+        queue;
+    }
+}
+
+&& ----- wire implementation ---------------------------&&
+brew make-wire[] {
+    brew signal-value : $0;
+    brew action-procedures : cons[empty, empty];
+
+    brew set-my-signal![new-value] {
+        if [ ~( signal-value = new-value ) ] {
+            signal-value : new-value;
+            call-each[action-procedures];
+            "done";
+        }
+    }
+
+    brew accept-action-procedure![proc] {
+        action-procedures : cons[proc, action-procedures];
+        proc[];
+    }
+
+    brew get-signal[] { signal-value; }
+    brew set-signal![x] { set-my-signal![x]; }
+    brew add-action![x] { accept-action-procedure![x]; }
+
+    mug;
+
+}
+
+brew call-each[procedures] {
+    if [(procedures = empty) or (procedures.car = empty)] {
+        "done";
+    }
+    else {
+        procedures.car[];
+        call-each[procedures.cdr];
+    }
+}
+
+brew get-signal[wire] {
+    wire.get-signal[];
+}
+
+brew set-signal![wire, new-value] {
+    wire.set-signal![new-value];
+}
+
+brew add-action![wire, action-procedure] {
+    wire.add-action![action-procedure];
+}
+
+brew after-delay[delay, action] {
+    add-to-agenda![(delay + current-time[the-agenda]), action, the-agenda];
+}
+
+brew propagate[] {
+    if [ empty-agenda?[the-agenda] ] {
+        "done";
+    }
+    else {
+        brew first-item : first-agenda-item[the-agenda];
+        first-item[];
+        remove-first-agenda-item![the-agenda];
+        propagate[];
+    }
+}
+
+brew probe[name, wire] {
+    brew print-func[] {
+        steamln[];
+        steamln[name, " ", current-time[the-agenda], " New-value = ", get-signal[wire]];
+    }
+
+    add-action![wire, print-func];
+}
+
+
+&& ----- agenda implementation ---------------------------&&
+
+brew make-time-segment[time, queue] {
+    cons[time, queue];
+}
+
+brew segment-time[s] { s.car; }
+brew segment-queue[s] { s.cdr; }
+brew make-agenda[s] { cons[$0, empty]; }
+brew current-time[agenda] { agenda.car; }
+brew set-current-time![agenda, time] {
+    agenda.car : time;
+
+}
+
+brew segments[agenda] { agenda.cdr; }
+brew set-segments![agenda, segments] { agenda.cdr : segments; }
+
+brew first-segment[agenda] {
+    brew temp : segments[agenda];
+    temp.car;
+}
+
+brew rest-segments[agenda] {
+    brew temp: segments[agenda];
+    temp.cdr;
+}
+
+brew empty-agenda?[agenda] {
+    (segments[agenda] = empty);
+}
+
+brew add-to-agenda![time, action, agenda] {
+    brew belongs-before?[segments] {
+        ((segments = empty) or (time < segment-time[segments.car]));
+    }
+
+    brew make-new-time-segment[time, action] {
+        brew q : make-queue[];
+        insert-queue![q, action];
+        make-time-segment[time, q];
+    }
+
+    brew add-to-segments![segments] {
+        if [ segment-time[segments.car] = time] {
+            insert-queue![segment-queue[segments.car], action];
+        }
+        else {
+            brew rest : segments.cdr;
+            if [ belongs-before?[rest] ] {
+                segments.cdr : cons[make-new-time-segment[time,action], segments.cdr];
+            }
+            else {
+                add-to-segments![rest];
+            }
+        }
+    }
+
+    brew segments : segments[agenda];
+    if [ belongs-before?[segments] ] {
+        set-segments![agenda, cons[make-new-time-segment[time, action], segments]];
+    }
+    else {
+        add-to-segments![segments];
+    }
+}
+
+brew remove-first-agenda-item![agenda] {
+    brew q : segment-queue[first-segment[agenda]];
+    delete-queue![q];
+    if [ empty-queue?[q] ] {
+        set-segments![agenda, rest-segments[agenda]];
+    }
+}
+
+brew first-agenda-item[agenda] {
+    if [ empty-agenda?[agenda] ] {
+        steamln["ERROR | Agenda is empty: first-agenda-item"];
+    }
+    else {
+        brew first-seg : first-segment[agenda];
+        set-current-time![agenda, segment-time[first-seg]];
+        front-queue[segment-queue[first-seg]];
+    }
+}
+
+&& ----- logic gate implementation ---------------------------&&
+
+brew inverter[input, output] {
+    brew invert-input[] {
+        brew new-value : logical-not[get-signal[input]];
+
+        brew temp-proc[] {
+            set-signal![output, new-value];
+        }
+
+        after-delay[inverter-delay, temp-proc];
+
+    }
+
+    add-action![input, invert-input];
+    "ok";
+}
+
+brew logical-not[s] {
+    if [s = $0] {
+        $1;
+    }
+    else {
+        $0;
+    }
+}
+
+brew logical-and[s1, s2] {
+    if [ (s1 = $0) or (s2 = $0) ] {
+        $0;
+    }
+    else {
+        $1;
+    }
+}
+
+brew logical-or[s1, s2] {
+    if [ (s1 = $1) or (s2 = $1) ] {
+        $1;
+    }
+    else {
+        $0;
+    }
+}
+
+brew and-gate[a1, a2, output] {
+    brew and-action-procedure[] {
+        brew new-value : logical-and[get-signal[a1], get-signal[a2]];
+
+        brew temp-proc[] {
+            set-signal![output, new-value];
+        }
+
+        after-delay[and-gate-delay, temp-proc];
+    }
+
+    add-action![a1, and-action-procedure];
+    add-action![a2, and-action-procedure];
+    "ok";
+}
+
+brew or-gate[a1, a2, output] {
+
+    brew or-action-procedure[] {
+
+        brew new-value : logical-or[get-signal[a1], get-signal[a2]];
+
+        brew temp-proc[] {
+            set-signal![output, new-value];
+        }
+
+        after-delay[or-gate-delay, temp-proc];
+    }
+
+    add-action![a1, or-action-procedure];
+    add-action![a2, or-action-procedure];
+}
+
+&& ----- adder implementation ---------------------------&&
+
+brew half-adder[a, b, s, c] {
+    brew d : make-wire[];
+    brew e : make-wire[];
+
+    or-gate[a, b, d];
+    and-gate[a, b, c];
+    inverter[c, e];
+    and-gate[d, e, s];
+    "ok";
+}
+
+brew full-adder[a, b, c-in, sum, c-out] {
+    brew s : make-wire[];
+    brew c1 : make-wire[];
+    brew c2 : make-wire[];
+
+    half-adder[b, c-in, s, c1];
+    half-adder[a, s, sum, c2];
+    or-gate[c1, c2, c-out];
+
+    "ok";
+}
+
+brew the-agenda : make-agenda[];
+
+&^ --------------------------------------------------
+&
+&  Unit Tests
+&
+& -------------------------------------------------- ^&
+
+brew testAdder[] {
+
+   the-agenda : make-agenda[];
+   brew inverter-delay : $1;
+   brew and-gate-delay : $5;
+   brew or-gate-delay : $3;
+
+   brew in0 : make-wire[];
+   brew in1 : make-wire[];
+   brew out0 : make-wire[];
+   brew c-in : make-wire[];
+   brew carry : make-wire[];
+
+   steamln["setting up full adder..."];
+   steamln[full-adder[in0, in1, c-in, out0, carry]];
+
+
+
+
+    && --- input variables are here --- &&
+   set-signal![in0, $1];
+   set-signal![in1, $1];
+   set-signal![c-in, $1];
+    && ---    end input variables   --- &&
+
+
+
+   steamln["in0 is ", get-signal[in0]];
+   steamln["in1 is ", get-signal[in1]];
+   steamln["c-in is ", get-signal[c-in]];
+
+  steamln["starting propagation..."];
+
+   propagate[];
+   steamln["carry is ", get-signal[carry]];
+   steamln["out is ", get-signal[out0]];
+}
+
+brew testQueue[] {
+
+    brew test-proc[] {
+        steamln["running test-proc"];
+    }
+
+    brew q : make-queue[];
+    insert-queue![q, test-proc];
+    steamln["q.car is ", q.car];
+    steamln["front-ptr q is ", front-ptr[q]];
+
+    brew p : front-ptr[q];
+    steamln["p.car is ", p.car];
+    p.car[];
+
+    brew queue-proc[] {
+        steamln["procedure is running"];
+    }
+
+
+    brew proc : queue-proc;
+    steamln["proc is ", proc];
+    proc[];
+}
+
+
+
+brew main[] {
+    testAdder[];
+    &&testQueue[];
+}
+
+main[];

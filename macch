@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Macchiato
+# Shell script for the 'macch' command
+# Emily Huynh
+#
+
+java Interpreter $1

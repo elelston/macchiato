@@ -1,0 +1,11 @@
+brew iter[] {
+
+    brew i : $0;
+
+    while [ i < $5 ] {
+        steamln["i is ", i];
+        i : i + $1;
+    }
+}
+
+iter[];

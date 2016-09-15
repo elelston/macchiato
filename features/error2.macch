@@ -1,0 +1,12 @@
+brew main[] {
+	brew y : $1;
+    if[y == $4] {
+        y : y - $31;
+    }
+    else {
+        y : $10;
+    }
+
+}
+
+main[];

@@ -1,0 +1,421 @@
+&^ --------------------------------------------------
+&
+&   Dictionary Implementation
+&   Macchiato Programming Language
+&
+& -------------------------------------------------- ^&
+
+&& initialize the colors
+
+brew RED : "RED";
+brew BLACK : "BLACK";
+
+&& initialize empty node class and object
+brew NilNode[] {
+    brew color : BLACK;
+    mug;
+}
+
+brew NIL : NilNode[];
+
+&& red black functions
+brew Node[key] {
+    brew color : RED;
+    brew left : empty;
+    brew right : empty;
+    brew p : empty;
+
+    brew value : empty;
+
+    mug;
+}
+
+brew Tree[] {
+    brew root : empty;
+    mug;
+}
+
+brew left_rotate[tree, x] {
+    brew y : x.right;
+    x.right : y.left;
+
+    if[y.left ~= empty] {
+        y.left.p : x;
+    }
+
+    y.p : x.p;
+
+    if [x.p = empty] {
+        tree.root : y;
+    }
+    else {
+        if [x.key = x.p.left.key] {
+            x.p.left : y;
+        }
+        else {
+            x.p.right : y;
+        }
+    }
+
+    y.left : x;
+    x.p : y;
+}
+
+brew right_rotate[tree, x] {
+
+    brew y : x.left;
+    x.left : y.right;
+
+    if [y.right ~= empty] {
+        y.right.p : x;
+    }
+
+    y.p : x.p;
+
+    if [x.p = empty] {
+        tree.root : y;
+    }
+    else {
+        if [x.key = x.p.right.key] {
+            x.p.right : y;
+        }
+        else {
+            x.p.left : y;
+        }
+    }
+
+    y.right : x;
+    x.p : y;
+}
+
+brew tree_insert[tree, z] {
+    brew y : empty;
+    brew x : tree.root;
+
+    while [x ~= empty] {
+        y : x;
+
+        if [z.key < x.key] {
+            x : x.left;
+        }
+        else {
+            x : x.right;
+        }
+    }
+
+    z.p : y;
+
+    if [y = empty] {
+        tree.root : z;
+    }
+    else {
+        if [z.key < y.key] {
+            y.left : z;
+        }
+        else {
+            y.right : z;
+        }
+    }
+}
+
+brew rb_insert[tree, x] {
+
+    tree_insert[tree, x];
+
+    x.color : RED;
+
+    while [ (x.key ~= tree.root.key) and (x.p.color = RED) ] {
+
+        if [(x.p.p.left ~= empty) and (x.p.key = x.p.p.left.key)] {
+
+            brew y : x.p.p.right;
+
+            if [y.color = RED] {
+                x.p.color : BLACK;
+                y.color : black;
+                x.p.p.color : red;
+                x : x.p.p;
+            }
+            else {
+                if [x.key = x.p.right.key] {
+                    x : x.p;
+                    left_rotate[tree, x];
+                }
+
+                x.p.color : BLACK;
+                x.p.p.color : RED;
+                right_rotate[tree, x.p.p];
+            }
+        }
+        else {
+            brew y : x.p.p.left;
+
+            if [(y ~= empty) and (y.color = RED)] {
+                x.p.color : BLACK;
+                y.color : BLACK;
+                x.p.p.color : RED;
+                x : x.p.p;
+            }
+            else {
+                if [(x.p.left ~= empty) and (x.key = x.p.left.key)] {
+                    x : x.p;
+                    right_rotate[tree, x];
+                }
+                x.p.color : BLACK;
+                x.p.p.color : RED;
+                left_rotate[tree, x.p.p];
+            }
+        }
+    }
+
+    tree.root.color : BLACK;
+
+}
+
+&^ --------------------------------------------------
+&
+&   Dictionary Functions (the interface)
+&
+& -------------------------------------------------- ^&
+
+brew Dictionary[] {
+
+    brew tree;
+
+    brew create[] {
+        tree : Tree[];
+    }
+
+    && insert a (key, value) pair into the dictionary
+    brew insert[key, val] {
+        brew item : Node[key];
+        item.value : val;
+        rb_insert[tree, item];
+
+    }
+
+    && searches dictionary and returns value of specified key
+    brew find[key] {
+
+        brew ptr : tree.root;
+        brew result : "not found";
+
+        while [ptr ~= empty] {
+
+            && if we found the desired key
+            if [ptr.key = key] {
+                result : ptr.value;
+                ptr : empty;
+            }
+            else {
+
+                && search the right side
+                if [ptr.key < key] {
+                    ptr : ptr.right;
+                }
+                else {
+
+                    && search the left side
+                    if [ptr.key > key] {
+                        ptr : ptr.left;
+                    }
+
+                    && otherwise, it is not in the dict
+                    else {
+                        result : "Item not found in dictionary";
+                        ptr : empty;
+                    }
+                }
+            }
+        }
+        result;
+    }
+
+    mug;
+}
+
+&^ --------------------------------------------------
+&
+&   Unit Tests : Dictionaries
+&
+& -------------------------------------------------- ^&
+brew testDict[] {
+    brew dict : Dictionary[];
+    dict.create[];
+
+    dict.insert[$0, "zero"];
+    dict.insert[$1, "one"];
+    dict.insert[$2, "two"];
+    dict.insert[$3, "three"];
+
+    steamln["dict.tree.root is ", dict.tree.root.key];
+    steamln["dict.tree.root.left is ", dict.tree.root.left.key];
+    steamln["dict.tree.root.right is ", dict.tree.root.right.key];
+    steamln["dict.tree.root.right.right ", dict.tree.root.right.right.key];
+
+    steamln[""];
+
+    steamln[dict.tree.root.key, " ", dict.tree.root.color];
+    steamln[dict.tree.root.left.key, " ", dict.tree.root.left.color];
+    steamln[dict.tree.root.right.key, " ", dict.tree.root.right.color];
+    steamln[dict.tree.root.right.right.key, " ", dict.tree.root.right.right.color];
+
+    steamln[""];
+
+    steamln["find returns ", dict.find[$0]];
+    steamln["find returns ", dict.find[$1]];
+    steamln["find returns ", dict.find[$2]];
+    steamln["find returns ", dict.find[$3]];
+
+    steamln["find returns ", dict.find[$5]];
+
+    steamln[""];
+
+    steamln["inserting ($5, five)..."];
+    dict.insert[$5, "five"];
+    steamln["inserted ($5, five)."];
+
+
+    steamln["find returns ", dict.find[$5]];
+}
+
+&^ --------------------------------------------------
+&
+&   Unit Tests : Red-Black Operations
+&
+& -------------------------------------------------- ^&
+
+brew testBinaryInsertion[] {
+    brew tree : Tree[];
+    brew one : Node[$1];
+    brew three : Node[$3];
+    brew five : Node[$5];
+    brew six : Node[$6];
+    brew seven : Node[$7];
+
+    tree_insert[tree, five];
+    tree_insert[tree, three];
+    tree_insert[tree, seven];
+    tree_insert[tree, one];
+    tree_insert[tree, six];
+
+    steamln[tree.root.key];
+    steamln[tree.root.left.key];
+    steamln[tree.root.left.left.key];
+    steamln[tree.root.right.key];
+    steamln[tree.root.right.left.key];
+}
+
+brew testRotationTwoElementTree[] {
+    brew tree : Tree[];
+
+    brew a : Node[$1];
+    a.color : "BLACK";
+
+    brew b : Node[$2];
+    b.color : "RED";
+    b.p : a;
+    a.left : b;
+    tree.root : a;
+
+    steamln["begin right rotate..."];
+    right_rotate[tree, a];
+    steamln[tree.root.key];
+    steamln[tree.root.right.key];
+
+    steamln["begin left rotate..."];
+    left_rotate[tree, b];
+    steamln[tree.root.key];
+    steamln[tree.root.left.key];
+}
+
+brew testRbInsertOneElement[] {
+    brew tree : Tree[];
+    brew one : Node[$1];
+    rb_insert[tree, one];
+
+    steamln[tree.root.key, " ", tree.root.color];
+}
+
+brew testRbInsertTwoElements[] {
+    brew tree : Tree[];
+    brew zero : Node[$0];
+    brew one : Node[$1];
+
+    rb_insert[tree, zero];
+    rb_insert[tree, one];
+
+    steamln[tree.root.key, " ", tree.root.color];
+    steamln[tree.root.right.key, " ", tree.root.right.color];
+}
+
+brew testRbInsertThreeElements[] {
+    steamln["begin testRbInsertThreeElements"];
+    steamln["begin node creation..."];
+    brew tree : Tree[];
+    brew zero : Node[$0];
+    brew one : Node[$1];
+    brew two : Node[$2];
+
+    steamln["begin inserts..."];
+    rb_insert[tree, zero];
+    rb_insert[tree, one];
+    rb_insert[tree, two];
+
+    steamln["print results..."];
+
+    steamln[zero.color];
+    steamln[one.color];
+    steamln[two.color];
+    &&steamln[tree.root.key, " ", tree.root.color];
+    &&steamln[tree.root.right.key, " ", tree.root.right.color];
+    &&steamln[tree.root.right.key, " ", tree.root.right.color];
+
+    steamln[one.key, " = ", tree.root.key];
+    steamln[zero.key, " = ", tree.root.left.key];
+    steamln[two.key, " = ", tree.root.right.key];
+}
+
+brew testRbInsertFourElements[] {
+    steamln["begin testRbInsertFourElements"];
+    steamln["begin node creation..."];
+    brew tree : Tree[];
+    brew zero : Node[$0];
+    brew one : Node[$1];
+    brew two : Node[$2];
+    brew three : Node[$3];
+
+    steamln["begin inserts..."];
+    rb_insert[tree, zero];
+    rb_insert[tree, one];
+    rb_insert[tree, two];
+    rb_insert[tree, three];
+
+    steamln["print results..."];
+
+    steamln[zero.color];
+    steamln[one.color];
+    steamln[two.color];
+    steamln[three.color];
+    steamln[tree.root.key, " ", tree.root.color];
+    steamln[tree.root.right.key, " ", tree.root.right.color];
+    steamln[tree.root.right.key, " ", tree.root.right.color];
+
+    steamln[one.key, " = ", tree.root.key];
+    steamln[zero.key, " = ", tree.root.left.key];
+    steamln[two.key, " = ", tree.root.right.key];
+    steamln[three.key, " = ", tree.root.right.right.key];
+}
+
+
+brew main[] {
+    &&testBinaryInsertion[];
+    &&testRotationTwoElementTree[];
+    &&testRbInsertOneElement[];
+    &&testRbInsertTwoElements[];
+    &&testRbInsertThreeElements[];
+    &&testRbInsertFourElements[];
+    testDict[];
+}
+
+main[];

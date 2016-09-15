@@ -1,0 +1,24 @@
+brew arrays[] {
+    steamln["creating arr1 with values [$1, \"str\", $4]..."];
+    brew arr1 : |[ $1, "str", $4 ]|;
+
+    steamln["printing arr1..."];
+
+    brew i : $0;
+    while [ i < $3 ] {
+        steamln[ "index ", i, " is ", arr1|[i]| ];
+        i : i + $1;
+    }
+
+    steamln["creating arr2 with values [$1, 2, (latte[] { steamln[\"test function\"]; })]..."];
+
+
+    brew arr2 : |[ $1, $2, (latte[] { steamln["this should be printed"]; }) ]|;
+
+    steamln["calling lambda function in arr2 at index 2..."];
+    brew temp : arr2|[$2]|;
+    (arr2|[$2]|)[];
+
+}
+
+arrays[];

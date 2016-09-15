@@ -1,0 +1,97 @@
+
+        program     : definition
+                    | definition program
+	
+	program	   : statement
+
+        definition  : brewDef
+                    | idExpr SEMICOLON
+                    | parenExpr SEMICOLON
+
+        init        : ASSIGN expr
+
+        brewDef     : BREW ID varDef
+                    | BREW ID funcDef
+
+        varDef      : init SEMICOLON
+                    | SEMICOLON
+
+        funcDef     : OBRACKET optParamList CBRACKET block
+
+        funcCall    : OBRACKET optArgList CBRACKET
+
+        optParamList: *empty*
+                    | paramList
+
+        paramList   : ID
+                    | ID COMMA paramList
+
+        optArgList  : *empty*
+                    | argList
+
+        argList     : expr
+                    | expr COMMA argList
+
+        expr        : primary
+                    | primary operator expr
+
+        numeric     : INTEGER
+                    | REAL
+
+        primary     : idExpr
+                    | STRING
+                    | BOOLEAN
+                    | DOLLARSIGN numeric
+                    | parenExpr
+                    | VBAR OBRACKET argList CBRACKET VBAR
+                    | lambdaDef
+                    | STEAM OBRACKET optArgList CBRACKET
+                    | STEAMLN OBRACKET optArgList CBRACKET
+                    | MINUS primary
+                    | NOT primary
+
+        parenExpr   : OPAREN expr CPAREN
+                    | OPAREN expr CPAREN OBRACKET optArgList CBRACKET
+
+        idExpr      : ID
+                    | ID funcCall
+                    | ID init
+                    | ID VBAR primary VBAR
+
+        lambdaDef   : LATTE OBRACKET optParamList CBRACKET block
+
+        operator    : EQUALTO
+                    | GREATERTHAN
+                    | LESSTHAN
+                    | PLUS
+                    | TIMES
+                    | MINUS
+                    | DIVIDE
+                    | ASSIGN
+                    | AND
+                    | OR
+
+        block       : OBRACE optStatementList CBRACE
+
+        optStatementList: statementList
+                        | *empty*
+
+        statementList   : statement
+                        | statement statementList
+
+        statement   : whileLoop
+                    | ifStatement
+                    | expr SEMICOLON
+                    | brewDef
+
+        ifStatement : IF
+                      OBRACKET expr CBRACKET
+                      block
+                      optElse 
+
+        optElse     : ELSE block
+			| ELSE ifStatement
+                    | *empty*
+
+        whileLoop   : WHILE OBRACKET expr CBRACKET
+                      block
