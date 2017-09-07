@@ -1,5 +1,5 @@
 brew recur[n] {
-    if [ n = $5 ] {
+    if [n = $5] {
         "done";
     }
     else {
@@ -9,7 +9,7 @@ brew recur[n] {
 }
 
 brew fib[n] {
-    if [ n <= $1 ] {
+    if [n <= $1] {
         n;
     }
     else {
